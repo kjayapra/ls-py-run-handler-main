@@ -1,7 +1,8 @@
-import uuid
 import asyncio
 import random
 import string
+import uuid
+
 import orjson
 import pytest
 import pytest_asyncio
@@ -130,3 +131,63 @@ def test_create_batch_runs_50_100kb(client, aio_benchmark):
     )
     assert result.status_code == 201
     assert len(result.json()["run_ids"]) == 50
+
+
+def test_create_batch_runs_1000_5kb(client, aio_benchmark):
+    """
+    Test with very large batch size and medium-sized items.
+    This tests scalability with high item count.
+    """
+    run_dicts = generate_batch_run_dicts(1000, 5)
+    serialized_json = orjson.dumps(run_dicts)
+
+    result = aio_benchmark(
+        send_request_with_pre_serialized_json, client, serialized_json
+    )
+    assert result.status_code == 201
+    assert len(result.json()["run_ids"]) == 1000
+
+
+def test_create_batch_runs_10_1mb(client, aio_benchmark):
+    """
+    Test with very large individual items but small batch size.
+    This tests handling of large payloads.
+    """
+    run_dicts = generate_batch_run_dicts(10, 1000)  # 1MB per field
+    serialized_json = orjson.dumps(run_dicts)
+
+    result = aio_benchmark(
+        send_request_with_pre_serialized_json, client, serialized_json
+    )
+    assert result.status_code == 201
+    assert len(result.json()["run_ids"]) == 10
+
+
+def test_create_batch_runs_100_50kb(client, aio_benchmark):
+    """
+    Test with balanced batch size and item size.
+    This represents a common real-world scenario.
+    """
+    run_dicts = generate_batch_run_dicts(100, 50)
+    serialized_json = orjson.dumps(run_dicts)
+
+    result = aio_benchmark(
+        send_request_with_pre_serialized_json, client, serialized_json
+    )
+    assert result.status_code == 201
+    assert len(result.json()["run_ids"]) == 100
+
+
+def test_create_batch_runs_25_500kb(client, aio_benchmark):
+    """
+    Test with medium batch size and large items.
+    This tests memory efficiency with large payloads.
+    """
+    run_dicts = generate_batch_run_dicts(25, 500)
+    serialized_json = orjson.dumps(run_dicts)
+
+    result = aio_benchmark(
+        send_request_with_pre_serialized_json, client, serialized_json
+    )
+    assert result.status_code == 201
+    assert len(result.json()["run_ids"]) == 25

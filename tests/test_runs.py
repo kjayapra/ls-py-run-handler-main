@@ -1,9 +1,10 @@
 import uuid
+
 import pytest
 from httpx import AsyncClient
 
-from ls_py_handler.main import app
 from ls_py_handler.api.routes.runs import Run
+from ls_py_handler.main import app
 
 
 @pytest.mark.asyncio
